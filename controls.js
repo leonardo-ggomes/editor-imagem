@@ -18,10 +18,14 @@ class ImageEditor {
     ctx = this.canvas.getContext("2d");
 
     isDragging = false;
+    startX = 0;
+    startY = 0;
     offsetX = 0;
     offsetY = 0;
     imageX = 100;
     imageY = 100;
+    lastX = 0;
+    lastY = 0;
 
     gridSpacing = 20; // Tamanho inicial do grid
     minGridSpacing = 5; // Tamanho mínimo do grid
@@ -63,11 +67,30 @@ class ImageEditor {
             this.atualizarGrid(this.colunas, this.gutter, this.linhaAltura);
         });
 
-        this.canvas.addEventListener('mousedown', this.startDrag.bind(this));
-        this.canvas.addEventListener('mousemove', this.dragImage.bind(this));
-        this.canvas.addEventListener('mouseup', this.stopDrag.bind(this));
+        this.canvas.addEventListener('mousedown', (e) => {
+            this.isDragging = true;
+            this.startX = e.clientX - this.offsetX;
+            this.startY = e.clientY - this.offsetY;
+            this.canvas.style.cursor = 'grabbing';
+        });
+        
+        
+        document.addEventListener('mouseup', () => {
+            this.isDragging = false;
+            this.canvas.style.cursor = 'grab';
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+
+            this.offsetX = e.clientX - this.startX;
+            this.offsetY = e.clientY - this.startY;
+          
+            this.canvas.style.left = this.offsetX + 'px';
+            this.canvas.style.top = this.offsetY + 'px';
+        });
     
-        this.canvas.addEventListener('mousemove', this.dragImage.bind(this));
+        
         this.canvas.addEventListener('wheel', this.handleScroll.bind(this)); // Evento de scroll
         this.adjustCanvasResolution();
 
@@ -100,29 +123,6 @@ class ImageEditor {
         this.gridOverlay.style.backgroundImage = `${colunasBG}, ${linhasBG}`;
     }
 
-    startDrag(event) {
-        const mouseX = event.clientX;
-        const mouseY = event.clientY;
-    
-        // Verifica se o mouse está dentro da área da imagem
-        if (
-            mouseX >= this.imageX &&
-            mouseX <= this.imageX + this.img.width * this.filters.scale &&
-            mouseY >= this.imageY &&
-            mouseY <= this.imageY + this.img.height * this.filters.scale
-        ) {
-            this.isDragging = true; // Começa o arraste
-            this.offsetX = mouseX - this.imageX; // Calcula a posição relativa
-            this.offsetY = mouseY - this.imageY;
-        }
-    }
-    
-
-    stopDrag() {
-        this.isDragging = false; // Finaliza o arraste
-    }
-
-
     adjustCanvasResolution() {
         const ratio = window.devicePixelRatio || 1; // Pega a densidade de pixels da tela (normalmente 1 ou 2 para telas de alta resolução)
 
@@ -153,14 +153,7 @@ class ImageEditor {
             // Redesenha o grid e a imagem
             this.applyFilters();
         }
-    }
-    
-    
-    stopDrag() {
-        this.isDragging = false; // Finaliza o arraste
-    }
-
-
+    }    
    
     // Lida com o scroll para ajustar o grid
     handleScroll(event) {
@@ -210,10 +203,13 @@ class ImageEditor {
         this.filtersFolder.addButton({
             title: 'Imagem'
         }).on('click', () => this.downloadImage());
+
+     
+
     }
 
-    resetFilters(){
-        this.filters = {
+    resetFilters() {
+        Object.assign(this.filters, {
             contrast: 100,
             brightness: 100,
             saturate: 100,
@@ -227,8 +223,13 @@ class ImageEditor {
             scale: 1,
             dropShadow: 0,
             background: '#1e1e1e',
-        }
+        });
+    
+        document.body.style.backgroundColor = this.filters.background;
+        this.pane.refresh(); // Atualiza os controles visuais do Tweakpane
+        this.applyFilters(); // Aplica os filtros atualizados
     }
+    
 
     // Lida com o upload da imagem
     handleImageUpload() {
@@ -256,31 +257,51 @@ class ImageEditor {
     // Aplica os filtros na imagem com base nos valores dos controles
     applyFilters() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.ctx.save();
-        this.ctx.filter = `
-        contrast(${this.filters.contrast}%)
-        brightness(${this.filters.brightness}%)
-        saturate(${this.filters.saturate}%)
-        blur(${this.filters.blurEffect}px)
-        grayscale(${this.filters.grayscale}%)
-        hue-rotate(${this.filters.hue}deg)
-        sepia(${this.filters.sepia}%)
-        invert(${this.filters.invert}%)
-        opacity(${this.filters.opacity}%)
-        `;
-        this.ctx.shadowOffsetX = this.filters.dropShadow;
-        this.ctx.shadowOffsetY = this.filters.dropShadow;
-        this.ctx.shadowBlur = this.filters.dropShadow;
-        this.ctx.shadowColor = this.filters.background;
-
-        this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-        this.ctx.rotate((this.filters.rotate * Math.PI) / 180);
+    
+        // Constrói a string dos filtros CSS
+        const filterString = `
+            contrast(${this.filters.contrast}%)
+            brightness(${this.filters.brightness}%)
+            saturate(${this.filters.saturate}%)
+            blur(${this.filters.blurEffect}px)
+            grayscale(${this.filters.grayscale}%)
+            hue-rotate(${this.filters.hue}deg)
+            sepia(${this.filters.sepia}%)
+            invert(${this.filters.invert}%)
+            opacity(${this.filters.opacity / 100})`;
+    
+        this.ctx.save(); // Salva o estado atual do canvas
+    
+        // Aplica o filtro CSS
+        this.ctx.filter = filterString;
+    
+        // Centraliza e aplica rotação/escala
+        const centerX = this.imageX + this.img.width / 2;
+        const centerY = this.imageY + this.img.height / 2;
+    
+        this.ctx.translate(centerX, centerY);
+        this.ctx.rotate((this.filters.rotate * Math.PI) / 180); // Rotação em radianos
         this.ctx.scale(this.filters.scale, this.filters.scale);
-
-        this.ctx.drawImage(this.img, -this.img.width / 2, -this.img.height / 2, this.img.width, this.img.height);
-        this.ctx.restore();
+    
+        // Aplica sombra, se houver
+        if (this.filters.dropShadow > 0) {
+            this.ctx.shadowColor = "rgba(0,0,0,0.5)";
+            this.ctx.shadowOffsetX = this.filters.dropShadow;
+            this.ctx.shadowOffsetY = this.filters.dropShadow;
+            this.ctx.shadowBlur = this.filters.dropShadow / 2;
+        }
+    
+        // Desenha a imagem no canvas
+        this.ctx.drawImage(
+            this.img,
+            -this.img.width / 2, // Posiciona para desenhar do centro
+            -this.img.height / 2
+        );
+    
+        this.ctx.restore(); // Restaura o estado anterior
     }
+    
+    
 
     // Função para redimensionar o canvas ao mudar o tamanho da tela
     resizeCanvas() {
@@ -296,12 +317,12 @@ class ImageEditor {
     }
    
     downloadImage() {
-        const imageUrl = this.canvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        link.download = 'imagem_editada.png';
+        const link = document.createElement("a");
+        link.download = "imagem-editada.png";
+        link.href = this.canvas.toDataURL("image/png");
         link.click();
     }
+    
 }
 
 document.addEventListener("DOMContentLoaded", function() {
