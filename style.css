@@ -40,6 +40,8 @@ body{
     height: calc(100% / 3);
     background-color: transparent; /* Cor de fundo preta */
     display: block; /* Remove qualquer espaço extra em torno do canvas */
+    position: absolute;
+    cursor: grab;
 }
 
 

@@ -69,23 +69,22 @@ class ImageEditor {
 
         this.canvas.addEventListener('mousedown', (e) => {
             this.isDragging = true;
-            this.startX = e.clientX - this.offsetX;
-            this.startY = e.clientY - this.offsetY;
+            this.startX = e.clientX - this.canvas.offsetLeft;
+            this.startY = e.clientY - this.canvas.offsetTop;
             this.canvas.style.cursor = 'grabbing';
         });
         
-        
-        document.addEventListener('mouseup', () => {
+        window.addEventListener('mouseup', () => {
             this.isDragging = false;
             this.canvas.style.cursor = 'grab';
         });
         
-        document.addEventListener('mousemove', (e) => {
+        window.addEventListener('mousemove', (e) => {
             if (!this.isDragging) return;
-
+        
             this.offsetX = e.clientX - this.startX;
             this.offsetY = e.clientY - this.startY;
-          
+        
             this.canvas.style.left = this.offsetX + 'px';
             this.canvas.style.top = this.offsetY + 'px';
         });
