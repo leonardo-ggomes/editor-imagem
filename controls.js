@@ -28,11 +28,15 @@ class ImageEditor {
     gridSpacing = 20; // Tamanho inicial do grid
     minGridSpacing = 5; // Tamanho mínimo do grid
     maxGridSpacing = 100; // Tamanho máximo do grid
+    
 
     constructor() {
         this.pane.title = "Editor de imagem";
         this.atualizarGrid(this.colunas, this.gutter, this.linhaAltura);
-
+        this.canvasSize = {
+            width: this.canvas.width,
+            height: this.canvas.height,
+        };
         // Inicializar os parâmetros do filtro
         this.filters = {
             contrast: 100,
@@ -211,8 +215,27 @@ class ImageEditor {
             title: 'Imagem'
         }).on('click', () => this.downloadImage());
 
-     
+        const sizeFolder = this.pane.addFolder({ title: 'Canvas Size', expanded: false });
 
+        sizeFolder.addBinding(this.canvasSize, 'width', { min: 100, max: 2000, step: 10 }).on('change', () => {
+            this.updateCanvasSize();
+        });
+        
+        sizeFolder.addBinding(this.canvasSize, 'height', { min: 100, max: 2000, step: 10 }).on('change', () => {
+            this.updateCanvasSize();
+        });
+
+    }
+
+    updateCanvasSize() {
+        this.canvas.width = this.canvasSize.width;
+        this.canvas.height = this.canvasSize.height;
+    
+        // Mantém a imagem centralizada no canvas ao redimensionar
+        this.imageX = (this.canvas.width - this.img.width * this.filters.scale) / 2;
+        this.imageY = (this.canvas.height - this.img.height * this.filters.scale) / 2;
+    
+        this.applyFilters(); // Redesenha com novo tamanho
     }
 
     resetFilters() {
