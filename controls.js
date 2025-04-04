@@ -262,9 +262,13 @@ class ImageEditor {
 
     // Aplica os filtros na imagem com base nos valores dos controles
     applyFilters() {
+        // Limpa o canvas antes de redesenhar
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
-        // Constrói a string dos filtros CSS
+        // Define o fundo do canvas
+        this.canvas.style.backgroundColor = this.filters.background;
+    
+        // Monta a string de filtros CSS que serão aplicados na imagem
         const filterString = `
             contrast(${this.filters.contrast}%)
             brightness(${this.filters.brightness}%)
@@ -274,38 +278,34 @@ class ImageEditor {
             hue-rotate(${this.filters.hue}deg)
             sepia(${this.filters.sepia}%)
             invert(${this.filters.invert}%)
-            opacity(${this.filters.opacity / 100})`;
+            opacity(${this.filters.opacity}%)
+            drop-shadow(0 0 ${this.filters.dropShadow}px black)
+        `;
     
-        this.ctx.save(); // Salva o estado atual do canvas
-    
-        // Aplica o filtro CSS
+        // Aplica os filtros no contexto do canvas
         this.ctx.filter = filterString;
     
-        // Centraliza e aplica rotação/escala
-        const centerX = this.imageX + this.img.width / 2;
-        const centerY = this.imageY + this.img.height / 2;
+        // Salva o estado atual do contexto
+        this.ctx.save();
     
-        this.ctx.fillStyle = `${this.filters.background}`
+        // Move o ponto de origem para o centro da imagem (para aplicar rotação e escala corretamente)
+        const centerX = this.imageX + (this.img.width * this.filters.scale) / 2;
+        const centerY = this.imageY + (this.img.height * this.filters.scale) / 2;
+    
         this.ctx.translate(centerX, centerY);
-        this.ctx.rotate((this.filters.rotate * Math.PI) / 180); // Rotação em radianos
+        this.ctx.rotate((this.filters.rotate * Math.PI) / 180);
         this.ctx.scale(this.filters.scale, this.filters.scale);
+        this.ctx.globalAlpha = this.filters.opacity / 100;
     
-        // Aplica sombra, se houver
-        if (this.filters.dropShadow > 0) {
-            this.ctx.shadowColor = "rgba(0,0,0,0.5)";
-            this.ctx.shadowOffsetX = this.filters.dropShadow;
-            this.ctx.shadowOffsetY = this.filters.dropShadow;
-            this.ctx.shadowBlur = this.filters.dropShadow / 2;
-        }
-    
-        // Desenha a imagem no canvas
+        // Desenha a imagem com redimensionamento
         this.ctx.drawImage(
             this.img,
-            -this.img.width / 2, // Posiciona para desenhar do centro
+            -this.img.width / 2,
             -this.img.height / 2
         );
     
-        this.ctx.restore(); // Restaura o estado anterior
+        // Restaura o contexto para evitar afetar outras operações
+        this.ctx.restore();
     }
     
     
