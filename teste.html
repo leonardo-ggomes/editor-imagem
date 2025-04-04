@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid tipo Figma com Scroll</title>
+
+
+
+</head>
+
+<body>
+    <div class="grid-overlay"></div>
+
+    <div class="content">
+        <h1>Minha Página</h1>
+        <p>Use o scroll para ajustar o grid!</p>
+    </div>
+
+    <script>
+
+        const gridOverlay = document.querySelector(".grid-overlay");
+
+        let colunas = 12;
+        let gutter = 16;
+        let linhaAltura = 32; // espaçamento entre linhas
+
+        function atualizarGrid(colunas, gutter, linhaAltura) {
+            const larguraTotal = window.innerWidth;
+            const colunaLargura = (larguraTotal - (colunas - 1) * gutter) / colunas;
+
+            // COLUNAS com linhas verticais brancas de 1px
+            const colunasBG = `repeating-linear-gradient(
+    to right,
+    transparent 0,
+    transparent ${colunaLargura}px,
+    #333232e0 ${colunaLargura}px,
+    #333232e0 ${colunaLargura + 1}px,
+    transparent ${colunaLargura + 1}px,
+    transparent ${colunaLargura + 1 + gutter}px
+  )`;
+
+            // LINHAS horizontais brancas de 1px com espaçamento configurável
+            const linhasBG = `repeating-linear-gradient(
+    to bottom,
+    #333232e0 0,
+    #333232e0 1px,
+    transparent 1px,
+    transparent ${linhaAltura}px
+  )`;
+
+            gridOverlay.style.backgroundImage = `${colunasBG}, ${linhasBG}`;
+
+
+        }
+
+        atualizarGrid(colunas, gutter, linhaAltura);
+
+        // Ajustar com o scroll
+        window.addEventListener("wheel", (event) => {
+            if (event.shiftKey) {
+                // Shift + scroll = ajustar LINHAS
+                linhaAltura += event.deltaY > 0 ? 4 : -4;
+                linhaAltura = Math.max(16, Math.min(linhaAltura, 100));
+            } else {
+                // Scroll comum = ajustar COLUNAS
+                colunas += event.deltaY > 0 ? -1 : 1;
+                colunas = Math.max(4, Math.min(colunas, 24));
+            }
+
+            atualizarGrid(colunas, gutter, linhaAltura);
+        });
+
+
+    </script>
+</body>
+
+</html>

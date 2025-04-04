@@ -8,17 +8,38 @@ html, body{
     height: 100%;
 }
 
+body{
+    background: #1e1e1e;
+}
 
 .tp-dfwv {
     position: absolute;
     top: 10%;
     left: 8px;
     width: 280px;
+    z-index: 999;
 }
 
-#studio {
+.grid-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: black; /* Cor de fundo preta */
+    pointer-events: none;
+    z-index: -99;
+    background-size: 100% 100%;
+    background-repeat: repeat;
+    background-position: top left;
+    background-blend-mode: difference;
+}
+
+
+#studio {
+    width: calc(100% / 3);
+    height: calc(100% / 3);
+    background-color: transparent; /* Cor de fundo preta */
     display: block; /* Remove qualquer espaço extra em torno do canvas */
 }
+
+

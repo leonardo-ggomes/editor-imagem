@@ -6,14 +6,22 @@ class ImageEditor {
     pane = new Pane({
         position: 'absolute'
     });
+
+    gridOverlay = document.querySelector(".grid-overlay");
+    colunas = 12
+    gutter = 16
+    linhaAltura = 32
+
+
+
     canvas = document.getElementById("studio");
     ctx = this.canvas.getContext("2d");
 
     isDragging = false;
     offsetX = 0;
     offsetY = 0;
-    imageX = 0;
-    imageY = 0;
+    imageX = 100;
+    imageY = 100;
 
     gridSpacing = 20; // Tamanho inicial do grid
     minGridSpacing = 5; // Tamanho mínimo do grid
@@ -21,7 +29,8 @@ class ImageEditor {
 
     constructor() {
         this.pane.title = "Editor de imagem";
-        
+        this.atualizarGrid(this.colunas, this.gutter, this.linhaAltura);
+
         // Inicializar os parâmetros do filtro
         this.filters = {
             contrast: 100,
@@ -36,10 +45,23 @@ class ImageEditor {
             rotate: 0,
             scale: 1,
             dropShadow: 0,
-            background: '#ffffff',
+            background: '#1e1e1e',
         };
 
         window.addEventListener('resize', () => this.resizeCanvas());
+        window.addEventListener("wheel", (event) => {
+            if (event.shiftKey) {
+                // Shift + scroll = ajustar LINHAS
+                this.linhaAltura += event.deltaY > 0 ? 4 : -4;
+                this.linhaAltura = Math.max(16, Math.min(this.linhaAltura, 100));
+            } else {
+                // Scroll comum = ajustar COLUNAS
+                this.colunas += event.deltaY > 0 ? -1 : 1;
+                this.colunas = Math.max(4, Math.min(this.colunas, 24));
+            }
+
+            this.atualizarGrid(this.colunas, this.gutter, this.linhaAltura);
+        });
 
         this.canvas.addEventListener('mousedown', this.startDrag.bind(this));
         this.canvas.addEventListener('mousemove', this.dragImage.bind(this));
@@ -48,14 +70,40 @@ class ImageEditor {
         this.canvas.addEventListener('mousemove', this.dragImage.bind(this));
         this.canvas.addEventListener('wheel', this.handleScroll.bind(this)); // Evento de scroll
         this.adjustCanvasResolution();
-        this.drawGrid();
+
         this.initializeControls();
+    }
+
+    atualizarGrid(colunas, gutter, linhaAltura) {
+        const larguraTotal = window.innerWidth;
+        const colunaLargura = (larguraTotal - (colunas - 1) * gutter) / colunas;
+
+        const colunasBG = `repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent ${colunaLargura}px,
+        #333232e0 ${colunaLargura}px,
+        #333232e0 ${colunaLargura + 1}px,
+        transparent ${colunaLargura + 1}px,
+        transparent ${colunaLargura + 1 + gutter}px
+        )`;
+
+        // LINHAS horizontais brancas de 1px com espaçamento configurável
+        const linhasBG = `repeating-linear-gradient(
+        to bottom,
+        #333232e0 0,
+        #333232e0 1px,
+        transparent 1px,
+        transparent ${linhaAltura}px
+        )`;
+
+        this.gridOverlay.style.backgroundImage = `${colunasBG}, ${linhasBG}`;
     }
 
     startDrag(event) {
         const mouseX = event.clientX;
         const mouseY = event.clientY;
-
+    
         // Verifica se o mouse está dentro da área da imagem
         if (
             mouseX >= this.imageX &&
@@ -68,6 +116,7 @@ class ImageEditor {
             this.offsetY = mouseY - this.imageY;
         }
     }
+    
 
     stopDrag() {
         this.isDragging = false; // Finaliza o arraste
@@ -96,14 +145,13 @@ class ImageEditor {
         if (this.isDragging) {
             const mouseX = event.clientX;
             const mouseY = event.clientY;
-
-            // Atualizar o deslocamento da imagem
-            this.offsetX = mouseX - this.imageWidth / 2;
-            this.offsetY = mouseY - this.imageHeight / 2;
-
-            // Redesenha o canvas com a imagem movida
+    
+            // Atualiza a posição da imagem ao arrastar
+            this.imageX = mouseX - this.offsetX;
+            this.imageY = mouseY - this.offsetY;
+    
+            // Redesenha o grid e a imagem
             this.applyFilters();
-            this.drawGrid();
         }
     }
     
@@ -116,18 +164,17 @@ class ImageEditor {
    
     // Lida com o scroll para ajustar o grid
     handleScroll(event) {
+        const sensitivity = 1; // Sensibilidade do scroll
         if (event.deltaY < 0) {
             // Scroll para cima (aumenta o grid)
-            this.gridSpacing = Math.min(this.gridSpacing + 1, this.maxGridSpacing);
+            this.gridSpacing = Math.min(this.gridSpacing + sensitivity, this.maxGridSpacing);
         } else {
             // Scroll para baixo (diminui o grid)
-            this.gridSpacing = Math.max(this.gridSpacing - 1, this.minGridSpacing);
+            this.gridSpacing = Math.max(this.gridSpacing - sensitivity, this.minGridSpacing);
         }
-
-        // Redesenhar o grid com o novo tamanho
-        this.drawGrid();
+    
+        // Redesenhar o grid com o novo tamanh
     }
-
     // Inicializa os controles do painel
     initializeControls() {
         this.filtersFolder = this.pane.addFolder({ title: 'Filtros' });
@@ -145,7 +192,9 @@ class ImageEditor {
         this.filtersFolder.addBinding(this.filters, 'scale', { min: 0.1, max: 3.0, label: 'Scale' }).on('change', () => this.applyFilters());
         this.filtersFolder.addBinding(this.filters, 'dropShadow', { min: 0, max: 100, label: 'dropShadown' }).on('change', () => this.applyFilters());
 
-        this.filtersFolder.addBinding(this.filters, 'background', { picker: 'inline', expanded: true });
+        this.filtersFolder.addBinding(this.filters, 'background', { picker: 'inline', expanded: true }).on('change', () => {
+            document.body.style.backgroundColor = `${this.filters.background}`;
+        });
 
         this.filtersFolder = this.pane.addFolder({ title: 'Importar' });
         this.filtersFolder.addButton({
@@ -161,6 +210,24 @@ class ImageEditor {
         this.filtersFolder.addButton({
             title: 'Imagem'
         }).on('click', () => this.downloadImage());
+    }
+
+    resetFilters(){
+        this.filters = {
+            contrast: 100,
+            brightness: 100,
+            saturate: 100,
+            blurEffect: 0,
+            grayscale: 0,
+            hue: 0,
+            sepia: 0,
+            invert: 0,
+            opacity: 100,
+            rotate: 0,
+            scale: 1,
+            dropShadow: 0,
+            background: '#1e1e1e',
+        }
     }
 
     // Lida com o upload da imagem
@@ -217,37 +284,17 @@ class ImageEditor {
 
     // Função para redimensionar o canvas ao mudar o tamanho da tela
     resizeCanvas() {
+        // Ajusta o tamanho do canvas conforme a largura e altura da janela
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.applyFilters();
-        this.drawGrid();
+    
+        // Ajusta a resolução do canvas
+        this.adjustCanvasResolution();
+    
+        // Redesenha a imagem e o grid
+        this.applyFilters()
     }
-
-    // Desenha o grid
-    drawGrid() {
-        const lineWidth = 0.5;
-        const gridColor = 'rgba(255, 255, 255, 0.3)'; 
-
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.ctx.strokeStyle = gridColor;
-        this.ctx.lineWidth = lineWidth;
-
-        for (let x = this.gridSpacing; x < this.canvas.width; x += this.gridSpacing) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, this.canvas.height);
-            this.ctx.stroke();
-        }
-
-        for (let y = this.gridSpacing; y < this.canvas.height; y += this.gridSpacing) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(this.canvas.width, y);
-            this.ctx.stroke();
-        }
-    }
-
+   
     downloadImage() {
         const imageUrl = this.canvas.toDataURL('image/png');
         const link = document.createElement('a');
