@@ -8,11 +8,9 @@ class ImageEditor {
     });
 
     gridOverlay = document.querySelector(".grid-overlay");
-    colunas = 12
+    colunas = 24
     gutter = 16
     linhaAltura = 32
-
-
 
     canvas = document.getElementById("studio");
     ctx = this.canvas.getContext("2d");
@@ -85,6 +83,17 @@ class ImageEditor {
             this.offsetX = e.clientX - this.startX;
             this.offsetY = e.clientY - this.startY;
         
+            let border = 10;
+
+            // Limites para X (horizontal)
+            const maxX = (window.innerWidth - border) - this.canvas.offsetWidth;
+            this.offsetX = Math.max(0, Math.min(this.offsetX, maxX));
+        
+            // Limites para Y (vertical)
+            const maxY = (window.innerHeight - border) - this.canvas.offsetHeight;
+            this.offsetY = Math.max(0, Math.min(this.offsetY, maxY));
+        
+            // Aplicar posição limitada
             this.canvas.style.left = this.offsetX + 'px';
             this.canvas.style.top = this.offsetY + 'px';
         });
@@ -165,7 +174,7 @@ class ImageEditor {
             this.gridSpacing = Math.max(this.gridSpacing - sensitivity, this.minGridSpacing);
         }
     
-        // Redesenhar o grid com o novo tamanh
+      
     }
     // Inicializa os controles do painel
     initializeControls() {
@@ -184,18 +193,17 @@ class ImageEditor {
         this.filtersFolder.addBinding(this.filters, 'scale', { min: 0.1, max: 3.0, label: 'Scale' }).on('change', () => this.applyFilters());
         this.filtersFolder.addBinding(this.filters, 'dropShadow', { min: 0, max: 100, label: 'dropShadown' }).on('change', () => this.applyFilters());
 
-        this.filtersFolder.addBinding(this.filters, 'background', { picker: 'inline', expanded: true }).on('change', () => {
-            document.body.style.backgroundColor = `${this.filters.background}`;
-        });
+        this.filtersFolder.addBinding(this.filters, 'background', { picker: 'inline', expanded: true }).on('change', () => this.applyFilters())
+     
 
         this.filtersFolder = this.pane.addFolder({ title: 'Importar' });
         this.filtersFolder.addButton({
             title: 'Importar imagem'
         }).on('click', () => this.handleImageUpload());
 
-        this.filtersFolder = this.pane.addFolder({ title: 'Padrão' });
+        this.filtersFolder = this.pane.addFolder({ title: 'Redefinir' });
         this.filtersFolder.addButton({
-            title: 'Resetar'
+            title: 'Filtros'
         }).on('click', () => this.resetFilters());
 
         this.filtersFolder = this.pane.addFolder({ title: 'Exportar' });
@@ -224,7 +232,6 @@ class ImageEditor {
             background: '#1e1e1e',
         });
     
-        document.body.style.backgroundColor = this.filters.background;
         this.pane.refresh(); // Atualiza os controles visuais do Tweakpane
         this.applyFilters(); // Aplica os filtros atualizados
     }
@@ -278,6 +285,7 @@ class ImageEditor {
         const centerX = this.imageX + this.img.width / 2;
         const centerY = this.imageY + this.img.height / 2;
     
+        this.ctx.fillStyle = `${this.filters.background}`
         this.ctx.translate(centerX, centerY);
         this.ctx.rotate((this.filters.rotate * Math.PI) / 180); // Rotação em radianos
         this.ctx.scale(this.filters.scale, this.filters.scale);
@@ -325,5 +333,5 @@ class ImageEditor {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    const editor = new ImageEditor();
+   new ImageEditor();
 });

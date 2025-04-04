@@ -42,6 +42,10 @@ body{
     display: block; /* Remove qualquer espaço extra em torno do canvas */
     position: absolute;
     cursor: grab;
+    user-select: none;
+    top: 40%;
+    left: 40%;
+   
 }
 
 
