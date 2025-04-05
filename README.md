@@ -2,6 +2,8 @@
 
 Bem-vindo ao **Editor de Imagens Online**, uma aplicação web simples e poderosa que permite editar suas imagens diretamente do navegador, aplicando diversos filtros com apenas alguns cliques!
 
+<img src="print.png"/>
+
 🔗 **Acesse agora**: [leonardo-ggomes.github.io/editor-img](https://leonardo-ggomes.github.io/editor-img/)
 
 ---
