@@ -51,7 +51,7 @@ class ImageEditor {
             rotate: 0,
             scale: 1,
             dropShadow: 0,
-            background: '#1e1e1e',
+            background: '#ffffff00'
         };
 
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -198,8 +198,8 @@ class ImageEditor {
         this.filtersFolder.addBinding(this.filters, 'dropShadow', { min: 0, max: 100, label: 'dropShadown' }).on('change', () => this.applyFilters());
 
         this.filtersFolder.addBinding(this.filters, 'background', { picker: 'inline', expanded: true }).on('change', () => this.applyFilters())
-     
-
+           
+        
         this.filtersFolder = this.pane.addFolder({ title: 'Importar' });
         this.filtersFolder.addButton({
             title: 'Importar imagem'
