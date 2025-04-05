@@ -212,7 +212,7 @@ class ImageEditor {
 
         this.filtersFolder = this.pane.addFolder({ title: 'Exportar' });
         this.filtersFolder.addButton({
-            title: 'Imagem'
+            title: 'PNG'
         }).on('click', () => this.downloadImage());
 
         const sizeFolder = this.pane.addFolder({ title: 'Canvas Size', expanded: false });
