@@ -205,7 +205,7 @@ class ImageEditor {
             title: 'Importar imagem'
         }).on('click', () => this.handleImageUpload());
 
-        this.filtersFolder = this.pane.addFolder({ title: 'Redefinir' });
+        this.filtersFolder = this.pane.addFolder({ title: 'Redefinir',  expanded: false });
         this.filtersFolder.addButton({
             title: 'Filtros'
         }).on('click', () => this.resetFilters());
